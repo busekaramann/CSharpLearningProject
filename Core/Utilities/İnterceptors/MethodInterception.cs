@@ -6,6 +6,11 @@ namespace Core.Utilities.İnterceptors
     {
         public abstract class MethodInterception : MethodInterceptionBaseAttribute
         {
+            //İnvocation business metodlarını ifade eder hangi metotta kullanacağını belirttiğin yer 
+            //İnterception ise araya girmek demektir 
+            //virtual metod senin ezmeye çalıştığın metodları ifade eder 
+
+
             protected virtual void OnBefore(IInvocation invocation) { }
             protected virtual void OnAfter(IInvocation invocation) { }
             protected virtual void OnException(IInvocation invocation, System.Exception e) { }
@@ -36,3 +41,4 @@ namespace Core.Utilities.İnterceptors
         }
     }
 }
+

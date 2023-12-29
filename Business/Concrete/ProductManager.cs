@@ -3,9 +3,9 @@ using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
+using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
-using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
 using Entities.DTOs;
 using FluentValidation;
@@ -20,19 +20,28 @@ namespace Business.Concrete
     public class ProductManager : IProductService
     {
        private readonly IProductDal _ProductDal;
+        private readonly ICategoryService _categoryService;
 
-        public ProductManager(IProductDal productDal)
+
+        public ProductManager(IProductDal productDal, ICategoryService categoryService)
         {
             _ProductDal = productDal;
+            _categoryService = categoryService;
         }
 
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-           
-
+           IResult result= BusinessRules.Run(CheckIfProductCountOfCategoryCorrect(product.CategoryId),
+             CheckProductNameIsSame(product.ProductName), CheckCategoryExceed());
+            if (result != null)
+            {
+                return result;
+            } 
             _ProductDal.Add(product);
             return new SuccessResult(Messages.ProductAdded);
+
+           
         }
 
         public IResult Delete(int id)
@@ -73,6 +82,34 @@ namespace Business.Concrete
         public IResult Update(Product product)
         {
             throw new NotImplementedException();
+        }
+
+        private IResult CheckIfProductCountOfCategoryCorrect(int categoryId)
+        {
+            int count = _ProductDal.Count(p => p.CategoryId == categoryId);
+            if (count >= 10)
+            {
+                return new ErrorResult(Messages.ProductCountOfCategoryError);
+            }
+            return new SuccessResult();
+
+        }
+        private IResult CheckProductNameIsSame(string productName)
+        {
+            if (_ProductDal.Exists(p => p.ProductName == productName))
+            {
+                return new ErrorResult(Messages.ProductNameAlreadyExists);
+            }return new SuccessResult();
+        }
+        private IResult CheckCategoryExceed()
+        {
+            int categoryCount = _categoryService.Count();
+            if(categoryCount >= 15) 
+            {
+                return new ErrorResult(Messages.CategoryLimitExceted);
+            }
+            return new SuccessResult();
+
         }
     }
 }
